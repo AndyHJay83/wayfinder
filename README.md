@@ -33,6 +33,8 @@ The Supabase *service role* key is never used by the app.
 
 ## 2. Project setup on your Mac
 
+You need **Xcode 26 or newer**: the Mapbox SDK binaries are built with Swift 6.2 and won't load in Xcode 16.
+
 ```sh
 brew install xcodegen
 git clone <this repo> && cd wayfinder

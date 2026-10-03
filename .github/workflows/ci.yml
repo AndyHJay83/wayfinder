@@ -13,14 +13,17 @@ concurrency:
 jobs:
   ios:
     name: iOS build and unit tests
-    runs-on: macos-15
+    runs-on: macos-26
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
 
       - name: Select Xcode
         run: |
-          sudo xcode-select -s "$(ls -d /Applications/Xcode_16*.app | sort -V | tail -1)"
+          # Mapbox ships binaries built with Swift 6.2, so Xcode 26 or newer is required.
+          XCODE=$(ls -d /Applications/Xcode_2[6-9]*.app 2>/dev/null | grep -v -i beta | sort -V | tail -1)
+          if [ -z "$XCODE" ]; then ls -d /Applications/Xcode*.app; echo "::error::No Xcode 26+ found"; exit 1; fi
+          sudo xcode-select -s "$XCODE"
           xcodebuild -version
 
       - name: Mapbox SDK download credentials
