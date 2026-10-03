@@ -81,8 +81,11 @@ struct RouteCalculator {
             throw RouteCalculationError.tooManyWaypoints(routable.count + 1)
         }
         var result: [Waypoint] = []
-        var start = Waypoint(location: origin, heading: origin.course >= 0 ? origin.course : nil, name: "Start")
-        if origin.course >= 0 { start.headingAccuracy = 90 }
+        var start = Waypoint(coordinate: origin.coordinate, name: "Start")
+        if origin.course >= 0 {
+            start.heading = origin.course
+            start.headingAccuracy = 90
+        }
         result.append(start)
 
         for (index, item) in routable.enumerated() {

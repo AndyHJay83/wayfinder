@@ -78,6 +78,7 @@ jobs:
             -destination "id=${{ steps.sim.outputs.udid }}" \
             -clonedSourcePackagesDirPath .spm \
             CODE_SIGNING_ALLOWED=NO \
+            -IDEBuildingContinueBuildingAfterErrors=YES \
             2>&1 | tee xcodebuild.log | grep -E "error:|warning: .*deprecated|Test Case|Executed|BUILD|\*\*" | grep -v "^$" || true
           grep -q "\*\* TEST SUCCEEDED \*\*" xcodebuild.log
 
