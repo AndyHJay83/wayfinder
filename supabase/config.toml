@@ -1,0 +1,15 @@
+# Minimal Supabase CLI config for the Wayfinder project.
+# Link to your hosted project with: supabase link --project-ref YOUR_PROJECT_REF
+project_id = "wayfinder"
+
+[db]
+major_version = 17
+
+# Called by pg_cron with a shared secret header, not a user JWT.
+[functions.sync-fuel]
+verify_jwt = false
+
+# Called by the app with the publishable key (not a JWT under the new API keys).
+# Optionally lock it down with the APP_PUBLISHABLE_KEY secret.
+[functions.parking-osm]
+verify_jwt = false

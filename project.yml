@@ -1,0 +1,118 @@
+# XcodeGen spec. Generate the Xcode project with:
+#   brew install xcodegen && xcodegen generate
+# The generated Wayfinder.xcodeproj is git-ignored; this file is the source of truth.
+name: Wayfinder
+
+options:
+  bundleIdPrefix: com.example
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+  developmentLanguage: en-GB
+
+configFiles:
+  Debug: Config/App.xcconfig
+  Release: Config/App.xcconfig
+
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    IPHONEOS_DEPLOYMENT_TARGET: "17.0"
+    CODE_SIGN_STYLE: Automatic
+
+# Mapbox SDK versions are pinned together: Navigation 3.26.0 uses Maps 11.26.0,
+# and Search 2.26.0 uses the same MapboxCommon (24.26.0). Bump them together.
+packages:
+  MapboxNavigation:
+    url: https://github.com/mapbox/mapbox-navigation-ios.git
+    exactVersion: 3.26.0
+  MapboxMaps:
+    url: https://github.com/mapbox/mapbox-maps-ios.git
+    exactVersion: 11.26.0
+  MapboxSearch:
+    url: https://github.com/mapbox/mapbox-search-ios.git
+    exactVersion: 2.26.0
+  Turf:
+    url: https://github.com/mapbox/turf-swift.git
+    exactVersion: 4.0.0
+
+targets:
+  Wayfinder:
+    type: application
+    platform: iOS
+    sources:
+      - path: Wayfinder
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(WAYFINDER_BUNDLE_ID)
+        PRODUCT_NAME: Wayfinder
+        TARGETED_DEVICE_FAMILY: "1"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ENABLE_PREVIEWS: YES
+    info:
+      path: Wayfinder/Info.plist
+      properties:
+        CFBundleDisplayName: Wayfinder
+        CFBundleShortVersionString: "0.1.0"
+        CFBundleVersion: "1"
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        ITSAppUsesNonExemptEncryption: false
+        # Public Mapbox token, injected from Secrets.xcconfig
+        MBXAccessToken: $(MAPBOX_ACCESS_TOKEN)
+        # Supabase project URL and publishable key (stage 10+)
+        SupabaseURL: $(SUPABASE_URL)
+        SupabasePublishableKey: $(SUPABASE_PUBLISHABLE_KEY)
+        NSLocationWhenInUseUsageDescription: Wayfinder uses your location to show where you are on the map, find places near you and give turn-by-turn directions.
+        NSLocationAlwaysAndWhenInUseUsageDescription: Wayfinder uses your location in the background so spoken turn-by-turn directions keep working while your screen is locked or another app is open.
+        UIBackgroundModes:
+          - location
+          - audio
+          - remote-notification
+    entitlements:
+      path: Wayfinder/Wayfinder.entitlements
+      properties:
+        com.apple.developer.icloud-container-identifiers:
+          - iCloud.$(WAYFINDER_BUNDLE_ID)
+        com.apple.developer.icloud-services:
+          - CloudKit
+        aps-environment: development
+    dependencies:
+      - package: MapboxNavigation
+        product: MapboxNavigationCore
+      - package: MapboxNavigation
+        product: MapboxNavigationUIKit
+      - package: MapboxNavigation
+        product: MapboxDirections
+      - package: MapboxMaps
+        product: MapboxMaps
+      - package: MapboxSearch
+        product: MapboxSearch
+      - package: Turf
+        product: Turf
+
+  WayfinderTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: WayfinderTests
+    dependencies:
+      - target: Wayfinder
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(WAYFINDER_BUNDLE_ID).tests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_HOST: $(BUILT_PRODUCTS_DIR)/Wayfinder.app/Wayfinder
+        BUNDLE_LOADER: $(TEST_HOST)
+
+schemes:
+  Wayfinder:
+    build:
+      targets:
+        Wayfinder: all
+        WayfinderTests: [test]
+    test:
+      targets:
+        - WayfinderTests
+      gatherCoverageData: false

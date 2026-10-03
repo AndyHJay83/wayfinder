@@ -1,0 +1,11 @@
+// Shared build settings for Debug and Release.
+// Real values come from the git-ignored Secrets.xcconfig at the repo root.
+// The `?` makes the include optional so a fresh clone still opens in Xcode.
+
+MAPBOX_ACCESS_TOKEN = MISSING_MAPBOX_TOKEN
+DEVELOPMENT_TEAM =
+WAYFINDER_BUNDLE_ID = com.example.wayfinder
+SUPABASE_URL =
+SUPABASE_PUBLISHABLE_KEY =
+
+#include? "../Secrets.xcconfig"

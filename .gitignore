@@ -1,0 +1,26 @@
+# Secrets: never commit
+Secrets.xcconfig
+.netrc
+*.p8
+.env
+.env.*
+supabase/.env
+supabase/functions/.env
+
+# Xcode
+xcuserdata/
+DerivedData/
+*.xcworkspace/xcuserdata/
+build/
+.build/
+.swiftpm/
+
+# XcodeGen output (regenerate with `xcodegen generate`)
+Wayfinder.xcodeproj/
+
+# Supabase local
+supabase/.branches/
+supabase/.temp/
+
+# macOS
+.DS_Store
