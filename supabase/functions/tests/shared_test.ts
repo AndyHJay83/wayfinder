@@ -114,3 +114,21 @@ Deno.test("plan schema requires every field (structured output rule)", () => {
   };
   check(PLAN_SCHEMA as unknown as Record<string, unknown>);
 });
+
+Deno.test("Fuel Finder auth sends a User-Agent and reports why it was refused", async () => {
+  const { FuelFinderClient } = await import("../_shared/fuelFinder.ts");
+  const sent: { agent: string | null } = { agent: null };
+  const fakeFetch = ((_url: string | URL | Request, init?: RequestInit) => {
+    sent.agent = new Headers(init?.headers).get("User-Agent");
+    return Promise.resolve(new Response("Request blocked", { status: 403 }));
+  }) as typeof fetch;
+  const client = new FuelFinderClient("id", "secret", fakeFetch);
+  let message = "";
+  try {
+    await client.authenticate();
+  } catch (err) {
+    message = (err as Error).message;
+  }
+  assertEquals(sent.agent?.startsWith("Wayfinder/"), true);
+  assertEquals(message, "Fuel Finder auth failed: 403 (Request blocked)");
+});
