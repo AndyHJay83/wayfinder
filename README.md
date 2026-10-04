@@ -141,6 +141,7 @@ Product → Archive → Distribute App → App Store Connect → Upload. Then in
 
 ## Design notes and known limits
 
+- **Fuel Finder only answers UK traffic.** Supabase would otherwise run `sync-fuel` in Ireland and get an empty 403, so the schedule pins it to London (`x-region: eu-west-2`).
 - **Guidance has no bottom bar.** To end a journey early, tap the map and choose *End journey*.
 - **Dietary info** comes from OpenStreetMap `diet:*` tags, which are community-maintained and patchy outside cities. Without Supabase, or when nothing is tagged, it falls back to a name search such as "vegan cafe". Either way, check with the venue.
 - **Stage 9 uses the prebuilt `NavigationViewController`.** The SDK documents that you can swap routes mid-journey with `tripSession().startActiveGuidance(with:startLegIndex:)`, and the view controller updates itself. No custom guidance screen was needed. The SDK's own automatic faster-route switching is turned off so that the anti-nag rules decide. In debug builds, Mapbox request counts per hour are logged and shown in Settings.
