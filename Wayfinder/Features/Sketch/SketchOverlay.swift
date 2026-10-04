@@ -154,7 +154,7 @@ struct SketchOverlay: View {
         guard let proposal = app.sketchProposal else { return }
         app.setPreview(proposal.routes, trip: proposal.trip)
         close()
-        app.sheet = proposal.trip.items.count > 1 ? .tripBuilder : .routePreview
+        app.sheet = nil
     }
 
     private func cancel() {

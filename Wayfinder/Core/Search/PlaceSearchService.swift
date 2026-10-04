@@ -219,3 +219,132 @@ enum OpeningState {
         }
     }
 }
+
+// MARK: - Along-route, free-text and dietary search
+
+extension PlaceSearchService {
+    /// Minutes off the route a stop may be (Settings → Stops on the way).
+    static var maxDetourMinutes: Double {
+        max(1, UserDefaults.standard.double(forKey: SettingsKeys.maxDetourMinutes))
+    }
+
+    /// How far off the route that detour reaches: there and back at about 40 km/h.
+    static var corridorMetres: Double { maxDetourMinutes * 60 * 11 / 2 }
+
+    /// Category search along a route, limited to places within `detourMinutes` of it.
+    /// Results are ordered by how far along the route they are.
+    func search(category: PlaceCategory, alongRoute line: [CLLocationCoordinate2D], detourMinutes: Double = PlaceSearchService.maxDetourMinutes, limit: Int = 25) async throws -> [Place] {
+        let route = MapboxSearch.Route(coordinates: GeoMath.resample(line, count: 200))
+        let options = MapboxSearch.RouteOptions(route: route, time: detourMinutes * 60)
+        let places = try await search(category: category, along: options, limit: limit)
+        return Self.orderAlong(line, places)
+    }
+
+    /// Free-text search ("laundromat", "vegan cafe") near a point.
+    func textSearch(_ query: String, near center: CLLocationCoordinate2D, limit: Int = 10) async throws -> [Place] {
+        RequestCounter.shared.record(.search)
+        let options = SearchOptions(countries: ["gb"], limit: limit, proximity: center, origin: center, filterQueryTypes: [.poi])
+        let results: [Place] = try await withCheckedThrowingContinuation { continuation in
+            searchEngine.forward(query: query, options: options) { result in
+                continuation.resume(with: result.map { $0.map { Self.place(from: $0, category: nil, origin: center) } }.mapError { $0 as Error })
+            }
+        }
+        return results.sorted { ($0.distance ?? .infinity) < ($1.distance ?? .infinity) }
+    }
+
+    /// Free-text search near several points of a route; keeps places within the detour limit.
+    func textSearch(_ query: String, alongRoute line: [CLLocationCoordinate2D], detourMinutes: Double = PlaceSearchService.maxDetourMinutes) async throws -> [Place] {
+        let total = GeoMath.length(of: line)
+        let samples = stride(from: 0.15, through: 0.85, by: 0.35).compactMap { GeoMath.coordinate(along: line, at: total * $0) }
+        var found: [Place] = []
+        for point in samples {
+            let near = (try? await textSearch(query, near: point, limit: 6)) ?? []
+            found += near.filter { candidate in !found.contains { $0.id == candidate.id } }
+        }
+        // Off-route distance there and back at ~40 km/h must fit the detour allowance.
+        let maxOffRoute = detourMinutes * 330
+        let close = found.filter { (GeoMath.project($0.coordinate, onto: line)?.distanceFromLine ?? .infinity) <= maxOffRoute }
+        return Self.orderAlong(line, close)
+    }
+
+    /// Cafes/food matching dietary requirements. Uses OpenStreetMap `diet:*` tags through the
+    /// `places-osm` Edge Function; falls back to a text search ("vegan cafe") without Supabase.
+    func dietarySearch(category: PlaceCategory, filters: [DietaryFilter], near center: CLLocationCoordinate2D? = nil, alongRoute line: [CLLocationCoordinate2D]? = nil, detourMinutes: Double = PlaceSearchService.maxDetourMinutes) async throws -> (places: [Place], note: String?) {
+        let words = (filters.map(\.searchWords) + [category.displayName.lowercased()]).joined(separator: " ")
+        if let client = SupabaseClient.shared {
+            do {
+                let request = OSMPlacesRequest(
+                    amenities: category.osmAmenities,
+                    diets: filters.map(\.rawValue),
+                    lat: center?.latitude, lng: center?.longitude, radius_m: 3000,
+                    route: line.map { GeoMath.resample($0, count: 80).map { [$0.longitude, $0.latitude] } },
+                    corridor_m: detourMinutes * 330
+                )
+                let spots: [OSMPlace] = try await client.invoke(function: "places-osm", body: request)
+                let origin = center ?? line?.first
+                var places = spots.map { spot -> Place in
+                    let c = CLLocationCoordinate2D(latitude: spot.lat, longitude: spot.lng)
+                    return Place(id: "osm-\(spot.id)", name: spot.name ?? category.displayName, subtitle: spot.dietSummary,
+                                 coordinate: c, categoryIDs: [category.id], iconName: category.iconName, source: .osm,
+                                 distance: origin.map { GeoMath.distance($0, c) })
+                }
+                if let line { places = Self.orderAlong(line, places) }
+                else { places.sort { ($0.distance ?? .infinity) < ($1.distance ?? .infinity) } }
+                if !places.isEmpty { return (places, "From OpenStreetMap. Dietary info is community-maintained, so check with the venue.") }
+            } catch {
+                // fall through to text search
+            }
+        }
+        let places: [Place]
+        if let line { places = try await textSearch(words, alongRoute: line, detourMinutes: detourMinutes) }
+        else if let center { places = try await textSearch(words, near: center) }
+        else { places = [] }
+        return (places, "Matched by name and description (\"\(words)\"). Check with the venue.")
+    }
+
+    /// Street address for a pressed point on the map ("12 High Street").
+    func addressName(at coordinate: CLLocationCoordinate2D) async throws -> String? {
+        RequestCounter.shared.record(.reverseGeocode)
+        let options = ReverseGeocodingOptions(point: coordinate, limit: 1, filterQueryTypes: [.address], countries: ["gb"])
+        return try await withCheckedThrowingContinuation { continuation in
+            searchEngine.reverse(options: options) { result in
+                continuation.resume(with: result.map { $0.first?.name }.mapError { $0 as Error })
+            }
+        }
+    }
+
+    /// Sorts places by how far along the route they are.
+    static func orderAlong(_ line: [CLLocationCoordinate2D], _ places: [Place]) -> [Place] {
+        places
+            .map { place -> (Place, Double) in (place, GeoMath.project(place.coordinate, onto: line)?.distanceAlong ?? .infinity) }
+            .sorted { $0.1 < $1.1 }
+            .map(\.0)
+    }
+}
+
+private struct OSMPlacesRequest: Encodable {
+    let amenities: [String]
+    let diets: [String]
+    let lat: Double?
+    let lng: Double?
+    let radius_m: Double
+    let route: [[Double]]?
+    let corridor_m: Double
+}
+
+struct OSMPlace: Decodable {
+    let id: String
+    let name: String?
+    let lat: Double
+    let lng: Double
+    let amenity: String?
+    let diets: [String: String]?
+
+    var dietSummary: String? {
+        guard let diets, !diets.isEmpty else { return nil }
+        return diets.sorted { $0.key < $1.key }.map { key, value in
+            let label = DietaryFilter(rawValue: key)?.label ?? key
+            return value == "only" ? "\(label) only" : label
+        }.joined(separator: " · ")
+    }
+}

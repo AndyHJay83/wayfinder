@@ -14,6 +14,7 @@ All 13 stages from the handoff are written. The code has **not been compiled yet
 | Supabase project URL and **publishable** key | `Secrets.xcconfig` → `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` | — |
 | Fuel Finder **client ID** and **client secret** | Supabase Edge Function secrets only | the app, the repo, Secrets.xcconfig |
 | A random `SYNC_FUEL_SECRET` (e.g. `openssl rand -hex 32`) | Supabase Edge Function secret **and** Supabase Vault | the repo |
+| Anthropic API key (for *Natural language* trip requests) | Supabase Edge Function secret `ANTHROPIC_API_KEY` only | the app, the repo, Secrets.xcconfig |
 
 The Supabase *service role* key is never used by the app.
 
@@ -69,7 +70,7 @@ Every SDK call was checked against the Mapbox source code for the pinned version
 
 ## 5. Supabase (stages 10 and 13)
 
-1. Create a free Supabase project named `wayfinder` (London region is closest). Note the **project URL** and **publishable key** and put them in `Secrets.xcconfig`. The URL must be written as `https:/$()/REF.supabase.co`, because `//` starts a comment in xcconfig files. The app also accepts a bare host.
+1. Create a free Supabase project named `wayfinder` (London region is closest). Note the **project URL** and **publishable key** and put them in `Secrets.xcconfig`. Write the URL as a bare host (`REF.supabase.co`), because `//` starts a comment in xcconfig files. The app adds `https://` itself.
 2. Register for Fuel Finder API access at https://www.developer.fuel-finder.service.gov.uk (guidance: https://www.gov.uk/guidance/access-fuel-price-data). Read the terms. You will get a client ID and a client secret.
 3. Install the CLI and deploy:
    ```sh
@@ -80,20 +81,41 @@ Every SDK call was checked against the Mapbox source code for the pinned version
    supabase secrets set FUEL_FINDER_CLIENT_ID=… FUEL_FINDER_CLIENT_SECRET=… SYNC_FUEL_SECRET=…
    supabase functions deploy sync-fuel --no-verify-jwt
    supabase functions deploy parking-osm --no-verify-jwt
+   supabase functions deploy places-osm --no-verify-jwt
+   supabase functions deploy plan-trip --no-verify-jwt
+   supabase secrets set ANTHROPIC_API_KEY=…   # natural-language trip requests
    ```
+   (With the Supabase GitHub integration, merging to `main` deploys the migrations and functions for you. Secrets are still set once in *Edge Functions → Secrets*.)
 4. In the Supabase SQL editor, store the two values the cron job needs (they stay out of the repo):
    ```sql
    select vault.create_secret('https://YOUR_PROJECT_REF.supabase.co', 'project_url');
    select vault.create_secret('SAME_VALUE_AS_SYNC_FUEL_SECRET', 'sync_fuel_secret');
    ```
 5. Run the first sync now rather than waiting until 06:00: `select public.invoke_sync_fuel();`. Check the result in *Edge Functions → sync-fuel → Logs*, or with `select count(*) from stations;` (expect around 7,500 stations).
-6. Optional: `supabase secrets set APP_PUBLISHABLE_KEY=<publishable key>` makes `parking-osm` reject calls that don't carry your key.
+6. Recommended: `supabase secrets set APP_PUBLISHABLE_KEY=<publishable key>` makes `parking-osm`, `places-osm` and `plan-trip` reject calls that don't carry your key. This matters most for `plan-trip`, which spends your Anthropic credit.
 
 The sync runs at 06:00 and 18:00 **UTC**. That is 07:00/19:00 UK time in summer and 06:00/18:00 in winter. I left it on UTC rather than shifting it when the clocks change. Edit `supabase/migrations/20261003000002_fuel_schedule.sql` if you want different times.
 
 ## 6. TestFlight
 
 Product → Archive → Distribute App → App Store Connect → Upload. Then in App Store Connect → TestFlight, add yourself as an internal tester. Builds expire after 90 days.
+
+## Using the map
+
+| Gesture | What it does |
+|---|---|
+| Tap **Where to?** | Search for a destination. The trip banner slides up with ETA, distance, alternatives, Petrol / Cafes / Food / Parking and **GO**. |
+| Tap a chip in the banner | Finds places **on your route**, within the detour set in *Settings → Stops on the way*. **Add** puts the stop in the right place along the way. Cafes and Food can be filtered by dietary needs (vegan, gluten free, …). |
+| Tap **TRIP** | The trip's stops (or the saved destinations menu if there's no trip). |
+| Touch and hold **TRIP**, slide, lift | Saved destinations. With no destination it starts a trip; with one it adds a stop on the way. After searching for a place, **Create New Destination** names and saves it. Remove saved destinations in Settings. |
+| Touch and hold the map, slide, lift | Sketch, Natural language, Navigate here, Add as stop, Add as via point, Save place. Lift without sliding and the menu stays open for a tap. |
+| Two-finger touch and hold on the map | Settings. |
+| Touch and hold the blue route line, drag | Bend the route through that point (a via point). |
+| **GO** | Full-screen guidance: next step at the top with an ETA pill under it. A single tap on the map opens the journey screen: add a stop on the way, parking, other routes, reshape with sketch, or end the journey. |
+
+**Parking stay:** in the parking screen choose *Pick up / drop off* or how many hours you're staying; every price is worked out for that stay.
+
+**Natural language:** speak or type, e.g. "I need to go to work, but stop at a laundrette first, I've got no change for parking". Claude turns it into a plan (destination, stops, dietary needs, parking stay, free parking) and the app's own planner picks the places along your route. It only asks a question when it can't plan without one.
 
 ## What's where (by stage)
 
@@ -111,10 +133,16 @@ Product → Archive → Distribute App → App Store Connect → Upload. Then in
 | 10 Fuel cache | `supabase/`, `Core/Fuel/FuelService.swift`, `Features/Fuel/` |
 | 11 Planner | `Core/Planner/PlannerScoring.swift` (pure), `TripPlanner.swift`, `MatrixService.swift`, tests in `WayfinderTests/` |
 | 12 Armed chips, local prices | `AppModel` (arming), `Features/Home/CategoryChipsView.swift`, `Features/Fuel/LocalPlacesSheet.swift` |
-| 13 Parking + chains | `Core/Parking/`, `Features/Parking/`, `supabase/functions/parking-osm` |
+| 13 Parking + chains | `Core/Parking/`, `Features/Parking/` (incl. `StayPicker`), `supabase/functions/parking-osm` |
+| Map UI | `Features/Home/TripButton.swift`, `Features/PressMenu/PressMenu.swift` (press-and-slide menus), `Features/Preview/TripBanner.swift`, `MapController.swift` (map menu and two-finger Settings gestures) |
+| Stops on the way | `PlaceSearchService` (along-route, text and dietary search), `supabase/functions/places-osm` (OpenStreetMap `diet:*` tags) |
+| Guidance screen | `Core/Navigation/GuidancePresenter.swift`, `Features/Guidance/JourneySheet.swift` |
+| Natural language | `Core/Language/`, `Features/Language/NaturalLanguageView.swift`, `supabase/functions/plan-trip` (Claude API, structured output) |
 
 ## Design notes and known limits
 
+- **Guidance has no bottom bar.** To end a journey early, tap the map and choose *End journey*.
+- **Dietary info** comes from OpenStreetMap `diet:*` tags, which are community-maintained and patchy outside cities. Without Supabase, or when nothing is tagged, it falls back to a name search such as "vegan cafe". Either way, check with the venue.
 - **Stage 9 uses the prebuilt `NavigationViewController`.** The SDK documents that you can swap routes mid-journey with `tripSession().startActiveGuidance(with:startLegIndex:)`, and the view controller updates itself. No custom guidance screen was needed. The SDK's own automatic faster-route switching is turned off so that the anti-nag rules decide. In debug builds, Mapbox request counts per hour are logged and shown in Settings.
 - **Car parks:** Mapbox POI coverage for UK car parks is patchy, so that one category also queries MapKit's `MKLocalSearch` and merges the results.
 - **Sketch:** zoomed out (16 px > 500 m) snaps to named places by reverse geocoding. Zoomed in, it snaps to roads with Directions `radiuses`. "Follow my line closely" is only offered when 16 px ≤ 50 m (the Map Matching limit). If Map Matching fails, it falls back to via points automatically and tells you.

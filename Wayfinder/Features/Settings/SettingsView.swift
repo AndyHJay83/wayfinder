@@ -3,6 +3,8 @@ import SwiftUI
 
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var context
+    @Query(sort: \SavedPlace.name) private var savedPlaces: [SavedPlace]
 
     // Stage 4
     @AppStorage(SettingsKeys.avoidMotorways) private var avoidMotorways = false
@@ -13,6 +15,8 @@ struct SettingsView: View {
     @AppStorage(SettingsKeys.fasterRouteThresholdSeconds) private var fasterThreshold = 60.0
     @AppStorage(SettingsKeys.fasterRouteAutoAccept) private var autoAccept = false
     @AppStorage(SettingsKeys.fasterRouteAutoAcceptSeconds) private var autoAcceptSeconds = 180.0
+    // Stops on the way
+    @AppStorage(SettingsKeys.maxDetourMinutes) private var maxDetour = 8.0
     // Stage 10
     @AppStorage(SettingsKeys.fuelType) private var fuelType: FuelType = .e10
     // Stage 11
@@ -32,6 +36,24 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             Form {
+                Section {
+                    ForEach(savedPlaces) { place in
+                        Label(place.name, systemImage: place.icon)
+                    }
+                    .onDelete { offsets in
+                        offsets.map { savedPlaces[$0] }.forEach(context.delete)
+                    }
+                    if savedPlaces.isEmpty {
+                        Text("Search for a place, then touch and hold TRIP and choose Create New Destination.")
+                            .font(Theme.Fonts.caption).foregroundStyle(Theme.Colors.textSecondary)
+                    }
+                    NavigationLink("All saved places and collections") { SavedPlacesList() }
+                } header: {
+                    Text("Saved destinations")
+                } footer: {
+                    if !savedPlaces.isEmpty { Text("Swipe left on a destination to remove it.") }
+                }
+
                 Section("Route") {
                     Picker("Travel by", selection: $travelMode) {
                         ForEach(TravelMode.allCases) { Text($0.label).tag($0) }
@@ -56,6 +78,14 @@ struct SettingsView: View {
                     Text("Faster route during guidance")
                 } footer: {
                     Text("Checks every 45 seconds. A saving must show up twice in a row, never within 300 m of a turn, and at most once every 3 minutes.")
+                }
+
+                Section {
+                    Stepper("Detour up to \(Int(maxDetour)) min", value: $maxDetour, in: 1...30, step: 1)
+                } header: {
+                    Text("Stops on the way")
+                } footer: {
+                    Text("Petrol, cafes and food found after you pick a destination must be within this many extra minutes of your route.")
                 }
 
                 Section("Fuel") {
@@ -100,10 +130,14 @@ struct SettingsView: View {
                 Section("Status") {
                     LabeledContent("Mapbox token", value: AppConfig.isMapboxConfigured ? "Set" : "Missing")
                     LabeledContent("Supabase", value: AppConfig.isSupabaseConfigured ? "Set" : "Not set up")
+                    if let problem = AppConfig.supabaseProblem {
+                        Text(problem).font(Theme.Fonts.caption).foregroundStyle(Theme.Colors.warning)
+                    }
                     LabeledContent("Mapbox requests (last hour)", value: "\(RequestCounter.shared.countLastHour())")
                 }
             }
             .navigationTitle("Settings")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }
         }
     }
@@ -279,4 +313,9 @@ struct ChainShortcutsView: View {
         }
         .navigationTitle("Chain shortcuts")
     }
+}
+
+/// The full saved places screen, opened from Settings (it used to be on the home toolbar).
+private struct SavedPlacesList: View {
+    var body: some View { SavedPlacesView(embedded: true) }
 }

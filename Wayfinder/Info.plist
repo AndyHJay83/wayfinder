@@ -28,6 +28,10 @@
 	<string>Wayfinder uses your location in the background so spoken turn-by-turn directions keep working while your screen is locked or another app is open.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Wayfinder uses your location to show where you are on the map, find places near you and give turn-by-turn directions.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Wayfinder uses the microphone when you speak a trip request, such as "stop for petrol on the way to work".</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Wayfinder turns your spoken trip request into text so it can plan the route.</string>
 	<key>SupabasePublishableKey</key>
 	<string>$(SUPABASE_PUBLISHABLE_KEY)</string>
 	<key>SupabaseURL</key>

@@ -13,3 +13,11 @@ verify_jwt = false
 # Optionally lock it down with the APP_PUBLISHABLE_KEY secret.
 [functions.parking-osm]
 verify_jwt = false
+
+# Dietary place search (OpenStreetMap). Same access model as parking-osm.
+[functions.places-osm]
+verify_jwt = false
+
+# Natural-language trip planning (Claude API). Needs the ANTHROPIC_API_KEY secret.
+[functions.plan-trip]
+verify_jwt = false

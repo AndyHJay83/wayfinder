@@ -120,5 +120,5 @@ jobs:
       - uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
-      - run: deno check supabase/functions/sync-fuel/index.ts supabase/functions/parking-osm/index.ts
+      - run: deno check supabase/functions/sync-fuel/index.ts supabase/functions/parking-osm/index.ts supabase/functions/places-osm/index.ts supabase/functions/plan-trip/index.ts
       - run: deno test supabase/functions/tests/

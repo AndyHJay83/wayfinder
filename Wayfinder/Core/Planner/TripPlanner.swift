@@ -128,12 +128,17 @@ struct TripPlanner {
         for item in flexible {
             guard let category = PlaceCategory.with(id: item.categoryID!) else { continue }
             var (candidates, candidateNotes) = try await findCandidates(
-                for: category, routeShape: shape, origin: origin.coordinate, destination: destination,
+                for: category, item: item, routeShape: shape, origin: origin.coordinate, destination: destination,
                 tripMiles: tripMiles, settings: settings
             )
-            notes += candidateNotes
             candidates = Array(candidates.prefix(maxCandidatesPerStop))
-            guard !candidates.isEmpty else { throw PlannerError.noCandidates(category.displayName) }
+            if item.freeParkingPreferred, !category.isParking {
+                let checked = await preferFreeParking(candidates, stayMinutes: item.stayMinutes ?? 30)
+                candidates = checked.candidates
+                candidateNotes += checked.notes
+            }
+            notes += candidateNotes
+            guard !candidates.isEmpty else { throw PlannerError.noCandidates(item.query ?? category.displayName) }
             var nodes: [(node: Int, candidate: PlannerCandidate)] = []
             for candidate in candidates {
                 points.append(candidate.coordinate)
@@ -157,6 +162,7 @@ struct TripPlanner {
 
     private func findCandidates(
         for category: PlaceCategory,
+        item: TripItem,
         routeShape: [CLLocationCoordinate2D],
         origin: CLLocationCoordinate2D,
         destination: CLLocationCoordinate2D,
@@ -170,7 +176,7 @@ struct TripPlanner {
             var stations: [FuelStation] = []
             let window = PlannerScoring.preferredFuelWindow(tripMiles: tripMiles, settings: settings)
             do {
-                stations = try await FuelService.shared.stationsAlong(route: routeShape, corridor: 2000)
+                stations = try await FuelService.shared.stationsAlong(route: routeShape, corridor: PlaceSearchService.corridorMetres)
                 if let window {
                     let inWindow = stations.filter { s in
                         guard let along = s.distanceAlongMetres else { return false }
@@ -213,9 +219,32 @@ struct TripPlanner {
             return (candidates, notes)
 
         case PlaceCategory.carPark.id:
-            // Ranked preferred car parks near the destination first, then the best nearby.
+            // Ranked preferred car parks near the destination first, then priced options for
+            // the planned stay (OpenStreetMap + my own), then the best car parks nearby.
             let preferred = PreferredCarParkStore.all()
                 .filter { GeoMath.distance($0.coordinate, destination) < 1500 }
+            if preferred.isEmpty, SupabaseClient.shared != nil {
+                var parking = ParkingService.Settings.current
+                if let stay = item.stayMinutes { parking.stayMinutes = stay }
+                let found = await ParkingService.shared.options(near: destination, radius: max(parking.maxWalkMetres, 600), settings: parking)
+                var usable = found.options.filter { $0.validNow != false && $0.staySupported != false }
+                if item.freeParkingPreferred {
+                    let free = usable.filter(\.kind.isFree)
+                    if free.isEmpty { notes.append("No free parking found near the destination, so paid options are included.") }
+                    else { usable = free }
+                }
+                if !usable.isEmpty {
+                    return (usable.prefix(6).map { option in
+                        PlannerCandidate(
+                            id: option.id, name: option.title, coordinate: option.coordinate,
+                            walkMinutes: option.walkMinutes,
+                            // Unknown prices count as £3 so known-cheap options win.
+                            parkingFeePounds: option.stayCostPence.map { Double($0) / 100 } ?? (option.kind.isFree ? 0 : 3),
+                            label: "\(option.title), \(option.costText) for \(StayPicker.label(parking.stayMinutes).lowercased())"
+                        )
+                    }, notes)
+                }
+            }
             if !preferred.isEmpty {
                 return (preferred.map { p in
                     let walk = WalkingRouter.estimate(from: p.coordinate, to: destination)
@@ -229,11 +258,56 @@ struct TripPlanner {
             }.sorted { $0.walkMinutes < $1.walkMinutes }, notes)
 
         default:
-            // Other categories: near the middle of the route.
-            let middle = GeoMath.coordinate(along: routeShape, at: GeoMath.length(of: routeShape) / 2) ?? origin
-            let places = try await PlaceSearchService.shared.search(category: category, near: middle)
-            return (places.map { PlannerCandidate(id: $0.id, name: $0.name, coordinate: $0.coordinate, dwellMinutes: 0) }, notes)
+            // Cafes, food and free-text stops ("laundromat"): along the route within the
+            // detour allowance, falling back to near the middle of the route.
+            let search = PlaceSearchService.shared
+            let dietary = item.dietary.compactMap(DietaryFilter.init(rawValue:))
+            var places: [Place]
+            if category.id == PlaceCategory.search.id {
+                guard let query = item.query, !query.isEmpty else { return ([], notes) }
+                places = try await search.textSearch(query, alongRoute: routeShape)
+                if places.isEmpty {
+                    places = try await search.textSearch(query, near: origin)
+                    if !places.isEmpty { notes.append("No \(query) right on your route, so the planner looked near you.") }
+                }
+            } else if !dietary.isEmpty, category.supportsDietary {
+                let result = try await search.dietarySearch(category: category, filters: dietary, alongRoute: routeShape)
+                places = result.places
+                if let note = result.note { notes.append(note) }
+            } else {
+                places = try await search.search(category: category, alongRoute: routeShape)
+            }
+            if places.isEmpty, category.id != PlaceCategory.search.id {
+                let middle = GeoMath.coordinate(along: routeShape, at: GeoMath.length(of: routeShape) / 2) ?? origin
+                places = try await search.search(category: category, near: middle)
+            }
+            let dwell = Double(item.stayMinutes ?? 0)
+            return (places.map { PlannerCandidate(id: $0.id, name: $0.name, coordinate: $0.coordinate, dwellMinutes: dwell) }, notes)
         }
+    }
+
+    /// "No change for parking": prefer stops with free parking close by. Stops without it
+    /// cost an extra £5 in the score, so they only win when nothing else is close.
+    private func preferFreeParking(_ candidates: [PlannerCandidate], stayMinutes: Int) async -> (candidates: [PlannerCandidate], notes: [String]) {
+        guard SupabaseClient.shared != nil else {
+            return (candidates, ["Connect Supabase to check for free parking at stops."])
+        }
+        var parking = ParkingService.Settings.current
+        parking.stayMinutes = stayMinutes
+        var checked: [PlannerCandidate] = []
+        var anyFree = false
+        for var candidate in candidates {
+            let options = await ParkingService.shared.options(near: candidate.coordinate, radius: 250, settings: parking).options
+            if let free = options.first(where: { $0.kind.isFree && $0.validNow != false && $0.staySupported != false }) {
+                anyFree = true
+                candidate.walkMinutes += free.walkMinutes
+                candidate.label = "\(candidate.name) (free parking, \(max(1, Int(free.walkMinutes.rounded()))) min walk)"
+            } else {
+                candidate.parkingFeePounds += 5
+            }
+            checked.append(candidate)
+        }
+        return (checked, anyFree ? [] : ["Couldn't confirm free parking at any of these stops. Check the signs."])
     }
 
     // MARK: Pure solver

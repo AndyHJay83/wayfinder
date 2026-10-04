@@ -6,8 +6,10 @@ struct ParkNearbySheet: View {
     let destination: Place
     @EnvironmentObject private var app: AppModel
     @Environment(\.dismiss) private var dismiss
-    @AppStorage(SettingsKeys.plannedStayMinutes) private var stayMinutes: Double = 60
+    @AppStorage(SettingsKeys.plannedStayMinutes) private var defaultStay: Double = 60
     @AppStorage(SettingsKeys.maxWalkMetres) private var maxWalk: Double = 400
+    /// This visit's stay. Starts from the Settings default; changing it re-prices every option.
+    @State private var stayMinutes: Int?
 
     enum Filter: String, CaseIterable, Identifiable { case all = "All", free = "Free only", paid = "Paid"; var id: String { rawValue } }
 
@@ -29,7 +31,7 @@ struct ParkNearbySheet: View {
     var body: some View {
         NavigationStack {
             List {
-                let summary = ParkingService.shared.summary(for: options, stayMinutes: Int(stayMinutes))
+                let summary = ParkingService.shared.summary(for: options, stayMinutes: stay)
                 if !summary.isEmpty {
                     Section {
                         ForEach(summary) { line in
@@ -42,7 +44,11 @@ struct ParkNearbySheet: View {
                         ForEach(Filter.allCases) { Text($0.rawValue).tag($0) }
                     }
                     .pickerStyle(.segmented)
-                    Stepper("Stay \(Formatters.duration(stayMinutes * 60))", value: $stayMinutes, in: 15...600, step: 15)
+                    StayPicker(minutes: Binding(get: { stay }, set: { stayMinutes = $0 }))
+                    if stay <= StayPicker.dropOffMinutes {
+                        Text("Showing places you can stop briefly. Many streets allow loading or pick up even where parking isn't allowed, so check the signs.")
+                            .font(Theme.Fonts.caption).foregroundStyle(Theme.Colors.textSecondary)
+                    }
                 }
                 Section {
                     ForEach(filtered) { option in
@@ -69,9 +75,9 @@ struct ParkNearbySheet: View {
             .navigationTitle("Park near \(destination.name)")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Close") { close() } } }
-            .task(id: "\(stayMinutes)-\(radius ?? 0)") { await load() }
+            .task(id: "\(stay)-\(radius ?? 0)") { await load() }
             .sheet(isPresented: $showNoLuck) {
-                NoLuckPanel(destination: destination, options: options) { action in
+                NoLuckPanel(destination: destination, options: options, stayMinutes: stay) { action in
                     showNoLuck = false
                     switch action {
                     case .widen(let metres): radius = metres
@@ -83,9 +89,13 @@ struct ParkNearbySheet: View {
         }
     }
 
+    private var stay: Int { stayMinutes ?? Int(defaultStay) }
+
     private func load() async {
         loading = true
-        let result = await ParkingService.shared.options(near: destination.coordinate, radius: radius)
+        var settings = ParkingService.Settings.current
+        settings.stayMinutes = stay
+        let result = await ParkingService.shared.options(near: destination.coordinate, radius: radius, settings: settings)
         options = result.options
         notes = result.notes
         loading = false
@@ -98,7 +108,7 @@ struct ParkNearbySheet: View {
     }
 
     private func close() {
-        if app.engine.isGuiding { dismiss() } else { app.sheet = .routePreview }
+        if app.engine.isGuiding { dismiss() } else { app.sheet = nil }
     }
 }
 
@@ -157,9 +167,9 @@ struct NoLuckPanel: View {
 
     let destination: Place
     let options: [ParkingOption]
+    let stayMinutes: Int
     let onAction: (Action) -> Void
     @EnvironmentObject private var app: AppModel
-    @AppStorage(SettingsKeys.plannedStayMinutes) private var stayMinutes: Double = 60
     @State private var savingSpot = false
     @State private var spotFree = true
     @State private var spotNote = ""

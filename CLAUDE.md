@@ -6,7 +6,7 @@ Personal iOS navigation app (driving and walking), SwiftUI, iOS 17+, TestFlight 
 - Mapbox Navigation SDK v3 via Swift Package Manager (pinned: Navigation 3.26.0, Maps 11.26.0, Search 2.26.0; they share MapboxCommon 24.26.0 and must be bumped together)
 - Mapbox Search (destination search and category search)
 - SwiftData with CloudKit sync for saved places
-- One free Supabase project that caches UK Fuel Finder petrol prices (stage 10) and OpenStreetMap parking (stage 13)
+- One free Supabase project that caches UK Fuel Finder petrol prices (stage 10) and OpenStreetMap parking (stage 13), finds dietary-tagged cafes/food (`places-osm`) and plans natural-language trip requests with the Claude API (`plan-trip`)
 - The Xcode project is generated from `project.yml` with XcodeGen. CI regenerates `Wayfinder.xcodeproj` and commits it, so it can be opened straight from Xcode. Change `project.yml` (adding new files under `Wayfinder/` needs no change), not the .xcodeproj by hand.
 
 ## Rules
@@ -14,6 +14,7 @@ Personal iOS navigation app (driving and walking), SwiftUI, iOS 17+, TestFlight 
 - The public Mapbox token comes from Secrets.xcconfig through the Info.plist key MBXAccessToken.
 - The secret download token lives only in ~/.netrc. Never touch that file.
 - The Fuel Finder client ID and client secret live only in Supabase Edge Function secrets. They never go in the app, the repo, or Secrets.xcconfig. The app only holds the Supabase project URL and publishable key. Never use the Supabase service role key in the app.
+- The Anthropic API key lives only in the Supabase Edge Function secret `ANTHROPIC_API_KEY`. Never in the app, the repo, or Secrets.xcconfig.
 - Secrets.xcconfig must stay in .gitignore. Check this before every commit (`scripts/check-secrets.sh`).
 - Always check the current Mapbox documentation for exact API names before writing code. SDK versions change and names in prompts may be out of date.
 - Run xcodebuild after every stage and fix all errors before moving on.
@@ -25,10 +26,10 @@ Personal iOS navigation app (driving and walking), SwiftUI, iOS 17+, TestFlight 
 
 ## Layout
 - `Wayfinder/App` – app entry, `AppModel` (central state), settings keys, config
-- `Wayfinder/Core` – non-UI logic: Navigation (engine, guidance, faster-route checker), Trip (model + `RouteCalculator`), Search, Sketch, Fuel, Planner (pure `PlannerScoring` + `TripPlanner`), Parking (`ParkingRules` + `ParkingService`), Persistence (SwiftData models)
+- `Wayfinder/Core` – non-UI logic: Navigation (engine, guidance, faster-route checker), Trip (model + `RouteCalculator`), Search, Sketch, Fuel, Planner (pure `PlannerScoring` + `TripPlanner`), Parking (`ParkingRules` + `ParkingService`), Language (natural-language plans + speech), Persistence (SwiftData models)
 - `Wayfinder/Features` – SwiftUI screens, one folder per feature
 - `WayfinderTests` – unit tests for the pure logic
-- `supabase/` – migrations and Edge Functions (`sync-fuel`, `parking-osm`); `deno test supabase/functions/tests/`
+- `supabase/` – migrations and Edge Functions (`sync-fuel`, `parking-osm`, `places-osm`, `plan-trip`); `deno test supabase/functions/tests/`
 
 ## Build
 ```

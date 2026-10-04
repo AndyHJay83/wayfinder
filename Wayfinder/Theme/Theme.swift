@@ -17,6 +17,8 @@ enum Theme {
         static let chipArmed = Color.accentColor
         static let chipIdle = Color(.secondarySystemBackground)
         static let favourite = Color.yellow
+        static let go = Color.green
+        static let tripButton = Color.accentColor
 
         static let stopPin = UIColor.systemRed
         static let viaPin = UIColor.systemPurple
@@ -37,6 +39,9 @@ enum Theme {
         static let caption = Font.caption
         static let price = Font.system(.headline, design: .rounded).monospacedDigit()
         static let eta = Font.system(.title3, design: .rounded).weight(.semibold).monospacedDigit()
+        static let etaLarge = Font.system(.title, design: .rounded).weight(.bold).monospacedDigit()
+        static let goButton = Font.system(.title3, design: .rounded).weight(.heavy)
+        static let tripButton = Font.system(.callout, design: .rounded).weight(.heavy)
     }
 
     enum Spacing {
@@ -51,6 +56,8 @@ enum Theme {
         static let chip: CGFloat = 16
         static let card: CGFloat = 14
         static let button: CGFloat = 12
+        static let menu: CGFloat = 18
+        static let banner: CGFloat = 22
     }
 
     enum Line {
@@ -59,8 +66,17 @@ enum Theme {
         static let walkingWidth: Double = 4
     }
 
+    enum Size {
+        static let tripButton: CGFloat = 64
+    }
+
+    enum Motion {
+        static let banner = Animation.spring(response: 0.42, dampingFraction: 0.86)
+    }
+
     enum Haptics {
         static func light() { UIImpactFeedbackGenerator(style: .light).impactOccurred() }
+        static func medium() { UIImpactFeedbackGenerator(style: .medium).impactOccurred() }
         static func success() { UINotificationFeedbackGenerator().notificationOccurred(.success) }
     }
 }

@@ -9,7 +9,7 @@ struct SupabaseClient {
 
         var errorDescription: String? {
             switch self {
-            case .notConfigured: "Supabase isn't set up yet. Add SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY to Secrets.xcconfig."
+            case .notConfigured: "Supabase isn't set up: " + (AppConfig.supabaseProblem ?? "check Secrets.xcconfig.")
             case .http(let code, let body): "Server error \(code): \(body.prefix(200))"
             }
         }

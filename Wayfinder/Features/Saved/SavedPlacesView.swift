@@ -2,6 +2,8 @@ import SwiftData
 import SwiftUI
 
 struct SavedPlacesView: View {
+    /// Pushed inside another NavigationStack (Settings) rather than shown as a sheet.
+    var embedded = false
     @EnvironmentObject private var app: AppModel
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
@@ -18,7 +20,14 @@ struct SavedPlacesView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        if embedded {
+            content
+        } else {
+            NavigationStack { content }
+        }
+    }
+
+    private var content: some View {
             List {
                 if !collections.isEmpty {
                     Picker("Collection", selection: $collectionFilter) {
@@ -59,12 +68,13 @@ struct SavedPlacesView: View {
             .searchable(text: $search, prompt: "Search saved places")
             .navigationTitle("Saved places")
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("Close") { dismiss() } }
+                if !embedded {
+                    ToolbarItem(placement: .cancellationAction) { Button("Close") { dismiss() } }
+                }
                 ToolbarItem(placement: .primaryAction) {
                     NavigationLink("Collections") { CollectionsView() }
                 }
             }
-        }
     }
 }
 

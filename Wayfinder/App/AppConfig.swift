@@ -34,4 +34,23 @@ enum AppConfig {
     }
 
     static var isSupabaseConfigured: Bool { supabaseURL != nil && supabasePublishableKey != nil }
+
+    /// Plain-English reason Supabase isn't usable, or nil when it is. Never includes key values.
+    static var supabaseProblem: String? {
+        let rawURL = (Bundle.main.object(forInfoDictionaryKey: "SupabaseURL") as? String)?
+            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if rawURL.isEmpty {
+            return "SUPABASE_URL is empty. In Secrets.xcconfig add: SUPABASE_URL = YOUR_REF.supabase.co"
+        }
+        if rawURL == "https:" || rawURL == "http:" {
+            return "SUPABASE_URL was cut off after \"https:\" because // starts a comment in .xcconfig files. Write it without https:// (SUPABASE_URL = YOUR_REF.supabase.co), then rebuild."
+        }
+        if supabaseURL == nil {
+            return "SUPABASE_URL doesn't look like a web address. Use the form YOUR_REF.supabase.co"
+        }
+        if supabasePublishableKey == nil {
+            return "SUPABASE_PUBLISHABLE_KEY is empty. Copy the publishable key from Supabase → Project Settings → API Keys into Secrets.xcconfig, then rebuild."
+        }
+        return nil
+    }
 }

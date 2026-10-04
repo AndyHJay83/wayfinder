@@ -1,8 +1,11 @@
+import CoreLocation
 import SwiftData
 import SwiftUI
 
-/// Long press on a chip: local places for that category near you (or the map centre).
-/// Petrol rows come from FuelService and always show price age.
+/// Places for a category. With a route on screen they're found along it (within the detour
+/// set in Settings) and "Add" puts the stop in the right place on the way; otherwise they're
+/// near you or the map centre. Petrol rows come from FuelService and always show price age.
+/// Cafes and food can be filtered by dietary requirements.
 struct LocalPlacesSheet: View {
     let category: PlaceCategory
     @EnvironmentObject private var app: AppModel
@@ -20,6 +23,14 @@ struct LocalPlacesSheet: View {
     @State private var fromCache: Date?
     @State private var loading = true
     @State private var error: String?
+    @State private var note: String?
+    @State private var dietary: Set<DietaryFilter> = []
+
+    /// Search along the planned route (not during guidance; that has its own screen).
+    private var routeLine: [CLLocationCoordinate2D]? {
+        guard !app.engine.isGuiding, let shape = app.previewRoutes?.mainRoute.route.shape?.coordinates, shape.count > 1 else { return nil }
+        return shape
+    }
 
     private var favouriteIDs: Set<String> { Set(favourites.map(\.stationID)) }
 
@@ -27,6 +38,12 @@ struct LocalPlacesSheet: View {
         NavigationStack {
             List {
                 if let error { Text(error).foregroundStyle(Theme.Colors.warning) }
+                if category.supportsDietary {
+                    DietaryFilterRow(selection: $dietary)
+                }
+                if let note {
+                    Label(note, systemImage: "info.circle").font(Theme.Fonts.caption).foregroundStyle(Theme.Colors.textSecondary)
+                }
                 if let fromCache {
                     Label("Offline: showing prices saved \(Formatters.age(since: fromCache))", systemImage: "wifi.slash")
                         .font(Theme.Fonts.caption)
@@ -42,25 +59,26 @@ struct LocalPlacesSheet: View {
                             isFavourite: favouriteIDs.contains(station.id),
                             onFavourite: { toggleFavourite(station) },
                             onNavigate: { app.choose(destination: station.asPlace) },
-                            onAdd: { app.addToTrip(station.asPlace) }
+                            onAdd: { add(station.asPlace) }
                         )
                     }
                 } else {
                     ForEach(places) { place in
                         PlaceRow(place: place,
                                  onNavigate: { app.choose(destination: place) },
-                                 onAdd: { app.addToTrip(place) })
+                                 onAdd: { add(place) })
                     }
                 }
                 if !loading && stations.isEmpty && places.isEmpty && error == nil {
-                    Text("Nothing found nearby.").foregroundStyle(Theme.Colors.textSecondary)
+                    Text(routeLine == nil ? "Nothing found nearby." : "Nothing found within \(Int(PlaceSearchService.maxDetourMinutes)) min of your route. You can allow a longer detour in Settings.")
+                        .foregroundStyle(Theme.Colors.textSecondary)
                 }
             }
             .overlay { if loading { ProgressView() } }
-            .navigationTitle("\(category.displayName) nearby")
+            .navigationTitle(routeLine == nil ? "\(category.displayName) nearby" : "\(category.displayName) on the way")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Close") { app.sheet = nil; app.clearCategoryResults() } } }
-            .task { await load() }
+            .task(id: dietary) { await load() }
             .onChange(of: sort) { _, _ in updatePins() }
         }
     }
@@ -88,26 +106,56 @@ struct LocalPlacesSheet: View {
     private func load() async {
         loading = true
         defer { loading = false }
-        guard let center = app.map?.searchCenter ?? app.currentLocation?.coordinate else {
+        error = nil
+        note = nil
+        let line = routeLine
+        guard let center = line == nil ? (app.map?.searchCenter ?? app.currentLocation?.coordinate) : line?.first else {
             error = RouteCalculationError.noOrigin.localizedDescription
             return
         }
+        let search = PlaceSearchService.shared
         do {
             if category.hasFuelPrices {
-                let result = try await FuelService.shared.stationsNear(center)
-                stations = result.stations
-                fromCache = result.source == .cache ? result.fetchedAt : nil
+                if let line {
+                    stations = try await FuelService.shared.stationsAlong(route: line, corridor: PlaceSearchService.corridorMetres)
+                    sort = .cheapest
+                } else {
+                    let result = try await FuelService.shared.stationsNear(center)
+                    stations = result.stations
+                    fromCache = result.source == .cache ? result.fetchedAt : nil
+                }
+            } else if !dietary.isEmpty {
+                let result = try await search.dietarySearch(category: category, filters: Array(dietary), near: line == nil ? center : nil, alongRoute: line)
+                places = result.places
+                note = result.note
+            } else if let line {
+                places = try await search.search(category: category, alongRoute: line)
             } else {
-                places = try await PlaceSearchService.shared.search(category: category, near: center)
+                places = try await search.search(category: category, near: center)
             }
             updatePins()
         } catch {
             self.error = error.localizedDescription
             if category.hasFuelPrices {
                 // No price data yet: still show stations from Mapbox.
-                places = (try? await PlaceSearchService.shared.search(category: category, near: center)) ?? []
+                if let line {
+                    places = (try? await search.search(category: category, alongRoute: line)) ?? []
+                } else {
+                    places = (try? await search.search(category: category, near: center)) ?? []
+                }
                 updatePins()
             }
+        }
+    }
+
+    /// On a route: insert where it falls along the way. Otherwise: add to the trip.
+    private func add(_ place: Place) {
+        if routeLine != nil {
+            app.insertAlongRoute(place)
+            app.clearCategoryResults()
+            app.sheet = nil
+        } else {
+            app.addToTrip(place)
         }
     }
 
@@ -121,6 +169,32 @@ struct LocalPlacesSheet: View {
         } else {
             context.insert(FavouriteStation(stationID: station.id, name: station.displayName, coordinate: station.coordinate))
         }
+    }
+}
+
+/// Toggle chips for dietary requirements (OpenStreetMap diet tags).
+struct DietaryFilterRow: View {
+    @Binding var selection: Set<DietaryFilter>
+
+    var body: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: Theme.Spacing.s) {
+                ForEach(DietaryFilter.allCases) { filter in
+                    let on = selection.contains(filter)
+                    Button {
+                        if on { selection.remove(filter) } else { selection.insert(filter) }
+                    } label: {
+                        Label(filter.label, systemImage: on ? "checkmark" : "leaf")
+                            .font(Theme.Fonts.caption.weight(.semibold))
+                            .padding(.horizontal, Theme.Spacing.m).padding(.vertical, 6)
+                            .foregroundStyle(on ? Color.white : Theme.Colors.textPrimary)
+                            .background(Capsule().fill(on ? AnyShapeStyle(Theme.Colors.chipArmed) : AnyShapeStyle(Theme.Colors.surface)))
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+        .listRowInsets(EdgeInsets(top: 6, leading: 12, bottom: 6, trailing: 12))
     }
 }
 

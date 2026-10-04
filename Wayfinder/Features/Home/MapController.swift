@@ -23,6 +23,8 @@ final class MapController: NSObject, ObservableObject {
     @Published private(set) var isFollowingUser = true
 
     private var routeDrag: UILongPressGestureRecognizer!
+    private var menuPress: UILongPressGestureRecognizer!
+    private var settingsPress: UILongPressGestureRecognizer!
     private var dragInsertIndex: Int?
     private var dragNeighbours: (CLLocationCoordinate2D, CLLocationCoordinate2D)?
     private var cancellables = Set<AnyCancellable>()
@@ -56,6 +58,7 @@ final class MapController: NSObject, ObservableObject {
         sketchAnchorPins = annotations.makePointAnnotationManager(id: "wayfinder-sketch-anchors")
 
         setUpRouteDrag()
+        setUpPressMenus()
 
         navigationMapView.navigationCamera.cameraStates
             .map { $0 == .following }
@@ -138,7 +141,15 @@ final class MapController: NSObject, ObservableObject {
             pin.textOffset = [0, 0.6]
             pin.textAnchor = .top
             pin.tapHandler = { [weak self] _ in
-                self?.appModel?.choose(destination: place)
+                guard let appModel = self?.appModel else { return true }
+                if appModel.previewRoutes != nil {
+                    // A route is showing: a result becomes a stop on the way.
+                    appModel.insertAlongRoute(place)
+                    appModel.clearCategoryResults()
+                    appModel.sheet = nil
+                } else {
+                    appModel.choose(destination: place)
+                }
                 return true
             }
             return pin
@@ -226,10 +237,56 @@ final class MapController: NSObject, ObservableObject {
         routeDrag.minimumPressDuration = 0.4
         routeDrag.delegate = self
         mapView.addGestureRecognizer(routeDrag)
-        // The SDK's own long press (drop a pin) only fires if the press wasn't on the route.
+    }
+
+    // MARK: Press-and-hold menus
+
+    /// One finger: the map menu (Sketch, Natural language, Navigate here, …), unless the press
+    /// is on the route line (that drags the route). Two fingers: Settings.
+    private func setUpPressMenus() {
+        // Replace the SDK's own long press (drop a pin) with our menu.
         for recognizer in navigationMapView.gestureRecognizers ?? [] where recognizer is UILongPressGestureRecognizer {
-            recognizer.require(toFail: routeDrag)
+            recognizer.isEnabled = false
         }
+
+        menuPress = UILongPressGestureRecognizer(target: self, action: #selector(handleMenuPress(_:)))
+        menuPress.minimumPressDuration = 0.45
+        menuPress.delegate = self
+        menuPress.require(toFail: routeDrag)
+        mapView.addGestureRecognizer(menuPress)
+
+        settingsPress = UILongPressGestureRecognizer(target: self, action: #selector(handleSettingsPress(_:)))
+        settingsPress.numberOfTouchesRequired = 2
+        settingsPress.minimumPressDuration = 0.6
+        settingsPress.allowableMovement = 20
+        settingsPress.delegate = self
+        mapView.addGestureRecognizer(settingsPress)
+    }
+
+    @objc private func handleMenuPress(_ gesture: UILongPressGestureRecognizer) {
+        guard let appModel else { return }
+        let global = gesture.location(in: nil)
+        switch gesture.state {
+        case .began:
+            setMapGesturesEnabled(false)
+            Theme.Haptics.medium()
+            let coordinate = mapView.mapboxMap.coordinate(for: gesture.location(in: mapView))
+            appModel.openMapMenu(at: global, coordinate: coordinate)
+        case .changed:
+            appModel.pressMenu.track(global)
+        case .ended:
+            setMapGesturesEnabled(true)
+            appModel.pressMenu.release(at: global)
+        default:
+            setMapGesturesEnabled(true)
+        }
+    }
+
+    @objc private func handleSettingsPress(_ gesture: UILongPressGestureRecognizer) {
+        guard gesture.state == .began, let appModel else { return }
+        Theme.Haptics.medium()
+        appModel.pressMenu.dismiss()
+        appModel.sheet = .settings
     }
 
     private func isNearRoute(_ point: CGPoint, threshold: CGFloat = 22) -> Bool {
@@ -354,10 +411,6 @@ final class MapController: NSObject, ObservableObject {
 // MARK: - NavigationMapViewDelegate
 
 extension MapController: NavigationMapViewDelegate {
-    func navigationMapView(_ navigationMapView: NavigationMapView, userDidLongTap mapPoint: MapPoint) {
-        appModel?.handleLongPress(at: mapPoint.coordinate, name: mapPoint.name)
-    }
-
     func navigationMapView(_ navigationMapView: NavigationMapView, didSelect alternativeRoute: AlternativeRoute) {
         Task { await appModel?.selectAlternative(alternativeRoute) }
     }
@@ -367,7 +420,18 @@ extension MapController: NavigationMapViewDelegate {
 
 extension MapController: UIGestureRecognizerDelegate {
     func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
-        guard gestureRecognizer === routeDrag, appModel?.isSketching == false else { return true }
-        return isNearRoute(gestureRecognizer.location(in: mapView))
+        guard let appModel else { return true }
+        if gestureRecognizer === routeDrag {
+            return !appModel.isSketching && isNearRoute(gestureRecognizer.location(in: mapView))
+        }
+        if gestureRecognizer === menuPress || gestureRecognizer === settingsPress {
+            return !appModel.isSketching && !appModel.engine.isGuiding && !appModel.pressMenu.isPresented
+        }
+        return true
+    }
+
+    /// The two-finger press must not be blocked by pinch and rotate, which use two fingers too.
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith other: UIGestureRecognizer) -> Bool {
+        gestureRecognizer === settingsPress
     }
 }
