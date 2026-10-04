@@ -93,7 +93,7 @@ jobs:
         # Pushes made with GITHUB_TOKEN don't trigger another CI run.
         if: success() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
         run: |
-          git add Wayfinder.xcodeproj
+          git add Wayfinder.xcodeproj Wayfinder/Info.plist Wayfinder/Wayfinder.entitlements
           if git diff --cached --quiet; then echo "Xcode project unchanged"; exit 0; fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
