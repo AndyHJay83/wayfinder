@@ -7,7 +7,7 @@ Personal iOS navigation app (driving and walking), SwiftUI, iOS 17+, TestFlight 
 - Mapbox Search (destination search and category search)
 - SwiftData with CloudKit sync for saved places
 - One free Supabase project that caches UK Fuel Finder petrol prices (stage 10) and OpenStreetMap parking (stage 13)
-- The Xcode project is generated from `project.yml` with XcodeGen (`xcodegen generate`). Edit `project.yml`, not the .xcodeproj.
+- The Xcode project is generated from `project.yml` with XcodeGen. CI regenerates `Wayfinder.xcodeproj` and commits it, so it can be opened straight from Xcode. Change `project.yml` (adding new files under `Wayfinder/` needs no change), not the .xcodeproj by hand.
 
 ## Rules
 - Never read, print, log or commit secrets.

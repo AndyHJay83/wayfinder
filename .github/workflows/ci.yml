@@ -15,8 +15,14 @@ jobs:
     name: iOS build and unit tests
     runs-on: macos-26
     timeout-minutes: 60
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Build the branch itself (not the PR merge commit) so the generated
+          # Xcode project can be committed back to it.
+          ref: ${{ github.head_ref || github.ref }}
 
       - name: Select Xcode
         run: |
@@ -81,6 +87,18 @@ jobs:
             -IDEBuildingContinueBuildingAfterErrors=YES \
             2>&1 | tee xcodebuild.log | grep -E "error:|warning: .*deprecated|Test Case|Executed|BUILD|\*\*" | grep -v "^$" || true
           grep -q "\*\* TEST SUCCEEDED \*\*" xcodebuild.log
+
+      - name: Commit generated Xcode project
+        # Keeps Wayfinder.xcodeproj in the repo so it can be opened straight from Xcode.
+        # Pushes made with GITHUB_TOKEN don't trigger another CI run.
+        if: success() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+        run: |
+          git add Wayfinder.xcodeproj
+          if git diff --cached --quiet; then echo "Xcode project unchanged"; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Update generated Xcode project"
+          git push origin "HEAD:${{ github.head_ref || github.ref_name }}"
 
       - name: Show compiler errors
         if: failure()
