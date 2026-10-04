@@ -224,12 +224,12 @@ enum OpeningState {
 
 extension PlaceSearchService {
     /// Minutes off the route a stop may be (Settings → Stops on the way).
-    static var maxDetourMinutes: Double {
+    nonisolated static var maxDetourMinutes: Double {
         max(1, UserDefaults.standard.double(forKey: SettingsKeys.maxDetourMinutes))
     }
 
     /// How far off the route that detour reaches: there and back at about 40 km/h.
-    static var corridorMetres: Double { maxDetourMinutes * 60 * 11 / 2 }
+    nonisolated static var corridorMetres: Double { maxDetourMinutes * 60 * 11 / 2 }
 
     /// Category search along a route, limited to places within `detourMinutes` of it.
     /// Results are ordered by how far along the route they are.
