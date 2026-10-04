@@ -35,16 +35,11 @@ The Supabase *service role* key is never used by the app.
 
 You need **Xcode 26 or newer**: the Mapbox SDK binaries are built with Swift 6.2 and won't load in Xcode 16.
 
-```sh
-brew install xcodegen
-git clone <this repo> && cd wayfinder
-cp Config/Secrets.example.xcconfig Secrets.xcconfig   # then edit it
-ln -s ../../scripts/check-secrets.sh .git/hooks/pre-commit
-xcodegen generate
-open Wayfinder.xcodeproj
-```
+1. In Xcode's start window choose **Clone Git Repository…** and paste `https://github.com/AndyHJay83/wayfinder`. Xcode opens `Wayfinder.xcodeproj`.
+2. In Finder, duplicate `Config/Secrets.example.xcconfig`, move the copy to the repo root and rename it `Secrets.xcconfig`. It then appears in Xcode's sidebar; fill in your values there.
+3. (Optional) `ln -s ../../scripts/check-secrets.sh .git/hooks/pre-commit` adds the secrets check as a pre-commit hook.
 
-`Wayfinder.xcodeproj` is generated and git-ignored. Change `project.yml`, then re-run `xcodegen generate`.
+`Wayfinder.xcodeproj` is generated from `project.yml` by CI and committed automatically. New Swift files added under `Wayfinder/` are picked up on the next CI run; if you'd rather regenerate locally, `brew install xcodegen && xcodegen generate`.
 
 ## 3. Manual Xcode steps
 

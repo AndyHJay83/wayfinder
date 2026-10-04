@@ -42,6 +42,12 @@ targets:
     platform: iOS
     sources:
       - path: Wayfinder
+      # Shown in Xcode's sidebar so keys can be edited there. Git-ignored; not compiled.
+      - path: Secrets.xcconfig
+        optional: true
+        buildPhase: none
+      - path: Config
+        buildPhase: none
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: $(WAYFINDER_BUNDLE_ID)
