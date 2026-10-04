@@ -45,6 +45,18 @@ struct Trip: Codable, Equatable {
         guard let i = items.firstIndex(where: { $0.id == item.id }) else { return }
         items[i] = item
     }
+
+    /// Where a new stop at `coordinate` belongs: before the first item that is further along
+    /// `shape` (the current route line), and never after the final destination.
+    func insertionIndex(for coordinate: CLLocationCoordinate2D, along shape: [CLLocationCoordinate2D]) -> Int {
+        guard !items.isEmpty else { return 0 }
+        guard let touch = GeoMath.project(coordinate, onto: shape) else { return items.count - 1 }
+        for (index, item) in items.enumerated() {
+            guard let c = item.coordinate, let projected = GeoMath.project(c, onto: shape) else { continue }
+            if projected.distanceAlong > touch.distanceAlong { return index }
+        }
+        return items.count - 1
+    }
 }
 
 struct TripItem: Identifiable, Codable, Equatable {
@@ -76,6 +88,14 @@ struct TripItem: Identifiable, Codable, Equatable {
     var arriveBy: Date?
     /// Snapping radius in metres for the Directions `radiuses` parameter (nil = SDK default).
     var snapRadius: Double?
+    /// Flexible stops: free-text search (e.g. "laundromat") when the category is `search`.
+    var query: String?
+    /// Flexible food/cafe stops: dietary requirements (`DietaryFilter` raw values).
+    var dietary: [String] = []
+    /// Planned stay at this stop in minutes (parking cost); 10 = pick up / drop off.
+    var stayMinutes: Int?
+    /// Prefer stops/parking that are free to park at (e.g. "no change for parking").
+    var freeParkingPreferred = false
 
     init(
         id: UUID = UUID(),
@@ -85,7 +105,11 @@ struct TripItem: Identifiable, Codable, Equatable {
         savedPlaceID: UUID? = nil,
         orderingRule: OrderingRule? = nil,
         arriveBy: Date? = nil,
-        snapRadius: Double? = nil
+        snapRadius: Double? = nil,
+        query: String? = nil,
+        dietary: [String] = [],
+        stayMinutes: Int? = nil,
+        freeParkingPreferred: Bool = false
     ) {
         self.id = id
         self.kind = kind
@@ -96,6 +120,10 @@ struct TripItem: Identifiable, Codable, Equatable {
         self.orderingRule = orderingRule
         self.arriveBy = arriveBy
         self.snapRadius = snapRadius
+        self.query = query
+        self.dietary = dietary
+        self.stayMinutes = stayMinutes
+        self.freeParkingPreferred = freeParkingPreferred
     }
 
     var coordinate: CLLocationCoordinate2D? {

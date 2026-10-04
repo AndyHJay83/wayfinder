@@ -2,6 +2,8 @@
 import { assertEquals } from "jsr:@std/assert@1";
 import { normaliseFuelType, normalisePrice, toPriceRows, toStationRow, unwrap } from "../_shared/fuelFinder.ts";
 import { normalise, tileKey, tilesFor } from "../_shared/osmParking.ts";
+import { aroundFilter, normalisePlaces, placesQuery } from "../_shared/osmPlaces.ts";
+import { PLAN_SCHEMA, sanitise, systemPrompt } from "../_shared/tripPlan.ts";
 
 Deno.test("unwrap handles bare arrays and nested envelopes", () => {
   assertEquals(unwrap([1, 2]), [1, 2]);
@@ -67,4 +69,66 @@ Deno.test("tiles cover the search circle", () => {
   assertEquals(tileKey(50.7234, -1.8812), "50.72,-1.89");
   const tiles = tilesFor(50.725, -1.885, 300);
   assertEquals(tiles.includes("50.72,-1.89"), true);
+});
+
+
+Deno.test("dietary query uses a corridor along the route", () => {
+  const around = aroundFilter({ radius: 1500, route: [[-1.88, 50.72], [-1.9, 50.8]] });
+  assertEquals(around, "(around:1500,50.72000,-1.88000,50.80000,-1.90000)");
+  const q = placesQuery(["cafe"], ["vegan", "gluten_free"], around);
+  assertEquals(q.includes(`["diet:vegan"~"^(yes|only)$"]`), true);
+  assertEquals(q.includes(`["diet:gluten_free"~"^(yes|only)$"]`), true);
+});
+
+Deno.test("dietary places keep yes/only and rank full matches first", () => {
+  const places = normalisePlaces([
+    { type: "node", id: 1, lat: 1, lon: 2, tags: { amenity: "cafe", name: "A", "diet:vegan": "yes" } },
+    { type: "node", id: 2, lat: 1, lon: 2, tags: { amenity: "cafe", name: "B", "diet:vegan": "only", "diet:gluten_free": "yes" } },
+    { type: "node", id: 3, lat: 1, lon: 2, tags: { amenity: "cafe", name: "C", "diet:vegan": "limited" } },
+  ], ["vegan", "gluten_free"]);
+  assertEquals(places.map((p) => p.name), ["B", "A"]);
+  assertEquals(places[0].diets, { vegan: "only", gluten_free: "yes" });
+});
+
+Deno.test("trip plan requests are bounded and saved places reach the prompt", () => {
+  assertEquals(sanitise({ text: "   " }), null);
+  const req = sanitise({
+    text: "x".repeat(2000),
+    history: [{ role: "system", content: "no" }, { role: "user", content: "hi" }],
+    saved_places: ["Work", 3],
+  })!;
+  assertEquals(req.text.length, 600);
+  assertEquals(req.history, [{ role: "user", content: "hi" }]);
+  assertEquals(systemPrompt(req).includes("- Work"), true);
+});
+
+Deno.test("plan schema requires every field (structured output rule)", () => {
+  const check = (node: Record<string, unknown>) => {
+    if (node.type === "object") {
+      const props = Object.keys(node.properties as object);
+      assertEquals([...(node.required as string[])].sort(), props.sort());
+      assertEquals(node.additionalProperties, false);
+      for (const p of Object.values(node.properties as Record<string, Record<string, unknown>>)) check(p);
+    }
+    if (node.type === "array") check(node.items as Record<string, unknown>);
+  };
+  check(PLAN_SCHEMA as unknown as Record<string, unknown>);
+});
+
+Deno.test("Fuel Finder auth sends a User-Agent and reports why it was refused", async () => {
+  const { FuelFinderClient } = await import("../_shared/fuelFinder.ts");
+  const sent: { agent: string | null } = { agent: null };
+  const fakeFetch = ((_url: string | URL | Request, init?: RequestInit) => {
+    sent.agent = new Headers(init?.headers).get("User-Agent");
+    return Promise.resolve(new Response("Request blocked", { status: 403 }));
+  }) as typeof fetch;
+  const client = new FuelFinderClient("id", "secret", fakeFetch);
+  let message = "";
+  try {
+    await client.authenticate();
+  } catch (err) {
+    message = (err as Error).message;
+  }
+  assertEquals(sent.agent?.startsWith("Wayfinder/"), true);
+  assertEquals(message, "Fuel Finder auth failed: 403 (Request blocked)");
 });

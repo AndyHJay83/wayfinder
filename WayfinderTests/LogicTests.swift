@@ -230,3 +230,29 @@ final class TripTests: XCTestCase {
         XCTAssertFalse(trip.hasUnresolvedCategoryItems)
     }
 }
+
+final class TripInsertionTests: XCTestCase {
+    private func c(_ lng: Double) -> CLLocationCoordinate2D { CLLocationCoordinate2D(latitude: 51, longitude: lng) }
+
+    func testStopGoesInRouteOrderAndNeverAfterDestination() {
+        let shape = [c(0), c(1)]
+        var trip = Trip(items: [
+            TripItem(kind: .stop, name: "A", coordinate: c(0.3)),
+            TripItem(kind: .stop, name: "Destination", coordinate: c(1)),
+        ])
+        XCTAssertEqual(trip.insertionIndex(for: c(0.1), along: shape), 0)
+        XCTAssertEqual(trip.insertionIndex(for: c(0.6), along: shape), 1)
+        // Past the end of the line: still before the destination.
+        XCTAssertEqual(trip.insertionIndex(for: c(1.4), along: shape), 1)
+        trip = Trip()
+        XCTAssertEqual(trip.insertionIndex(for: c(0.5), along: shape), 0)
+    }
+
+    func testFlexibleItemsWithoutCoordinatesAreSkipped() {
+        let trip = Trip(items: [
+            TripItem(kind: .category("petrol"), name: "Petrol", coordinate: nil),
+            TripItem(kind: .stop, name: "Destination", coordinate: c(1)),
+        ])
+        XCTAssertEqual(trip.insertionIndex(for: c(0.5), along: [c(0), c(1)]), 1)
+    }
+}

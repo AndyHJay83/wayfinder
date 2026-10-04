@@ -4,6 +4,19 @@
 
 export const FUEL_FINDER_BASE = "https://www.fuel-finder.service.gov.uk";
 
+/** Sent on every request. Without a User-Agent the service's firewall can answer 403. */
+export const FUEL_FINDER_HEADERS = {
+  "Accept": "application/json",
+  "Content-Type": "application/json",
+  "User-Agent": "Wayfinder/1.0 (personal navigation app; +https://github.com/AndyHJay83/wayfinder)",
+};
+
+/** First part of an error reply, for logs. Fuel Finder replies never contain our credentials. */
+export async function replySnippet(res: Response): Promise<string> {
+  const text = (await res.text().catch(() => "")).replace(/\s+/g, " ").trim();
+  return text ? ` (${text.slice(0, 200)})` : "";
+}
+
 export interface StationInfo {
   node_id: string;
   trading_name?: string;
@@ -72,10 +85,10 @@ export class FuelFinderClient {
   async authenticate(): Promise<void> {
     const res = await this.fetchImpl(`${FUEL_FINDER_BASE}/api/v1/oauth/generate_access_token`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: FUEL_FINDER_HEADERS,
       body: JSON.stringify({ client_id: this.clientId, client_secret: this.clientSecret }),
     });
-    if (!res.ok) throw new Error(`Fuel Finder auth failed: ${res.status}`);
+    if (!res.ok) throw new Error(`Fuel Finder auth failed: ${res.status}${await replySnippet(res)}`);
     const body = await res.json();
     const token = body?.data?.access_token ?? body?.access_token;
     if (!token) throw new Error("Fuel Finder auth response had no access_token");
@@ -88,7 +101,7 @@ export class FuelFinderClient {
       const url = new URL(path, FUEL_FINDER_BASE);
       url.searchParams.set("batch-number", String(batch));
       const res = await this.fetchImpl(url, {
-        headers: { Authorization: `Bearer ${this.token}`, "Content-Type": "application/json" },
+        headers: { ...FUEL_FINDER_HEADERS, Authorization: `Bearer ${this.token}` },
       });
       if (res.status === 404) return null; // past the last batch
       if (res.status === 401 || res.status === 403) {
@@ -99,7 +112,7 @@ export class FuelFinderClient {
         await sleep(15_000);
         continue;
       }
-      if (!res.ok) throw new Error(`Fuel Finder ${path} batch ${batch}: ${res.status}`);
+      if (!res.ok) throw new Error(`Fuel Finder ${path} batch ${batch}: ${res.status}${await replySnippet(res)}`);
       return await res.json();
     }
     throw new Error(`Fuel Finder ${path} batch ${batch}: gave up after retries`);

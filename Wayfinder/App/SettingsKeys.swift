@@ -13,6 +13,9 @@ enum SettingsKeys {
     static let fasterRouteAutoAccept = "fasterRouteAutoAccept"               // default false
     static let fasterRouteAutoAcceptSeconds = "fasterRouteAutoAcceptSeconds" // default 180
 
+    // Stops on the way: how far off the route a petrol/cafe/parking stop may be
+    static let maxDetourMinutes = "maxDetourMinutes"           // 8
+
     // Stage 10: fuel
     static let fuelType = "fuelType" // E10 default
 
@@ -43,6 +46,7 @@ enum SettingsKeys {
             fasterRouteThresholdSeconds: 60.0,
             fasterRouteAutoAccept: false,
             fasterRouteAutoAcceptSeconds: 180.0,
+            maxDetourMinutes: 8.0,
             fuelType: FuelType.e10.rawValue,
             litresPerFill: 25.0,
             valueOfTimePerHour: 12.0,

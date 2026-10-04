@@ -7,12 +7,16 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		08608DD5026C095D05B57646 /* NaturalLanguageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3E4C8F5926CFB7CE438909F /* NaturalLanguageView.swift */; };
 		0997DB27B514FC993030618C /* FasterRouteBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4AACF17B4F02A5AD9839EE0D /* FasterRouteBanner.swift */; };
 		0DD15BC9210396E0D785778B /* RouteCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70E46F11F182C2E2E19891BC /* RouteCalculator.swift */; };
 		0DD8178EBBD88C1621F5BF4C /* WayfinderApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45A11070D97661F379908834 /* WayfinderApp.swift */; };
+		1041F2A21F299146620E0FC4 /* StayPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 934087D0DCFE40A2CDB60C3B /* StayPicker.swift */; };
+		10C943BCEA7B93D7C83419B5 /* TripButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 911A8CC60284D956DF5F6BBD /* TripButton.swift */; };
 		1271DA703EDFBC99C31F5222 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 819A66BA4992E1D831BE5981 /* Models.swift */; };
 		12AD81011095AB9F5CDE0F1D /* Place.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8327625F49275E62344B8179 /* Place.swift */; };
 		18F1CDC01D251521A2DF3523 /* GuidancePresenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 742DAC85AB58F64E85CCE9E7 /* GuidancePresenter.swift */; };
+		192323DB10AB97A8077753A1 /* PressMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE79E7217A49F11E02F30E8F /* PressMenu.swift */; };
 		1BB1ECF95073076EBA254DF5 /* PermissionViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 459B293E2C6CCE5C6BD95D5F /* PermissionViews.swift */; };
 		1C49960FCFC6DAE8D12F97B4 /* MapStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 091DA45385BDE1646163649C /* MapStyle.swift */; };
 		2392917EDB7AE36212B0892C /* MapboxSearch in Frameworks */ = {isa = PBXBuildFile; productRef = 333D687C09806C06B6DC8EB7 /* MapboxSearch */; };
@@ -20,6 +24,7 @@
 		27B98A73AE7548975C72EC77 /* MapboxDirections in Frameworks */ = {isa = PBXBuildFile; productRef = 0AAD2A12A37A54DC43992500 /* MapboxDirections */; };
 		2FD4FBFB8772668BF212F233 /* MapboxNavigationCore in Frameworks */ = {isa = PBXBuildFile; productRef = DAE1288B5D9A1BAF00B816DE /* MapboxNavigationCore */; };
 		2FFCC91CBD526F8380AEF5B9 /* MapboxMaps in Frameworks */ = {isa = PBXBuildFile; productRef = 9D6F9884E7A83B61E901ACA9 /* MapboxMaps */; };
+		304B21443B2BF76DA626F19D /* JourneySheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84BBDB6A64CD55CEBFDEC7D4 /* JourneySheet.swift */; };
 		316174C66F12E5FEF263C07A /* PlannerScoring.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B2B63BCBEB16FA71FA8733D /* PlannerScoring.swift */; };
 		32C44DB06F1351836B83EF75 /* ParkNearbySheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 634CD6F2076995FA5F27AF78 /* ParkNearbySheet.swift */; };
 		33CE9DF8D547FC4A4CE7777C /* SearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 819863075758F91670783456 /* SearchView.swift */; };
@@ -33,16 +38,17 @@
 		702B0462E7CC4469BCD029B6 /* SavedPlacesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2932CD52DA5E27648F2A1AE1 /* SavedPlacesView.swift */; };
 		7B4069EA1FDA847147EFC456 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06AE6EAA836AB62666E0588D /* HomeView.swift */; };
 		80DF2C077AE46FB79E9E383E /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FADF28F7FF264CEF91E89D91 /* SettingsView.swift */; };
+		81AF24FB716C305B75255658 /* RouteSummaryCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4AF457E504CD7F492E32C1B6 /* RouteSummaryCard.swift */; };
 		855A2419ED7360FCF9AF58F6 /* TripBuilderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20A5422FD72E00EA7017CB10 /* TripBuilderView.swift */; };
 		8DA43E892456BD9811660B1C /* PlannerScoringTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BC39EF679AE5F8BFB8443D6 /* PlannerScoringTests.swift */; };
 		8EF8F1E6C74A9DF7A4C819B8 /* MatrixService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D938C648A675105327ABDC42 /* MatrixService.swift */; };
 		90F7910F03DEC2F95E143E91 /* ParkingRules.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F256041FEE67AD589697AB6 /* ParkingRules.swift */; };
-		914852627CB3AF2CDF451903 /* RoutePreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BD0AF78A916051929920D31 /* RoutePreviewView.swift */; };
 		9566E0CB8F71667498FD471E /* CategoryChipsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 020F154947ED501E71A2AB4F /* CategoryChipsView.swift */; };
 		9914B8D55D99C7EF174F08E3 /* WalkingRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DFF44AC67C9D84263379D4D /* WalkingRouter.swift */; };
 		9AEB6525C63696DB9C784E66 /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8564BE7C472E5258AEF2D512 /* AppConfig.swift */; };
 		9F122DD94D5AA6919D7B080B /* PlannerResultView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6286ED62B76B34B195CD3F4F /* PlannerResultView.swift */; };
 		A2B8255FB8DBB1F60D6C5BD6 /* Trip.swift in Sources */ = {isa = PBXBuildFile; fileRef = 684F79C5CE5A5D7859995928 /* Trip.swift */; };
+		AAD15E1995825D412F72FED3 /* SpeechInput.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CBD5A536F1DA0E448A739BD /* SpeechInput.swift */; };
 		BCCA43420A7BDCDD6AAB147C /* PlaceCategory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 179D12774DB975C9F4EEEF34 /* PlaceCategory.swift */; };
 		C065105343945155C69C6BE2 /* MapController.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE569DE4CCBE0B0040BDDFDD /* MapController.swift */; };
 		C2FB710AA06F5C2605F50029 /* FasterRouteChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = F88F948B9CC39B5C885B8B42 /* FasterRouteChecker.swift */; };
@@ -53,11 +59,13 @@
 		D86E5DC18EB34A50E11398D0 /* Turf in Frameworks */ = {isa = PBXBuildFile; productRef = BE21B3729ED9B6E376A3C094 /* Turf */; };
 		DCFD3CEFD89EB7CAC768992A /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDE9B69F7AF5010DEEF667BB /* Theme.swift */; };
 		E09E0399B527226D8138AEE4 /* RequestCounter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49D609DCCC4B35ACA33DCB91 /* RequestCounter.swift */; };
+		E77BDB1E957DDDDD5E83BD37 /* TripPlanRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06EC665E8FD4AF649B2FBCBE /* TripPlanRequest.swift */; };
 		EC3718CE8CA7D22599C91203 /* SupabaseClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83178FEB910655C3B9D59F18 /* SupabaseClient.swift */; };
 		F16D6493A6D168F440CF3570 /* LogicTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9835A8C172CE986FB4BED9F /* LogicTests.swift */; };
 		F671DC844D6729E5622A7F7E /* NavigationEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9B4F226BA30A5FBDCF2168A /* NavigationEngine.swift */; };
 		F7D25E9389CE52A9C46FD5BF /* MapViewRepresentable.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA64134D4FFF3A91DF9275D0 /* MapViewRepresentable.swift */; };
 		F89B3169EAFEDB4BD3CF182F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3AF074EE9D2EA70880D452A5 /* Assets.xcassets */; };
+		FAA3601484E6C000929DB61E /* TripBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19590B355E4529F5E1777051 /* TripBanner.swift */; };
 		FB1D283846FC1CF124DC30F5 /* PlaceSearchService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E291CC5A5AE6EB7E3DEF1560 /* PlaceSearchService.swift */; };
 		FEEF97EC3323A9008F4CBFEE /* TripPlanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66A7D28BF6D56BE711A33A5C /* TripPlanner.swift */; };
 /* End PBXBuildFile section */
@@ -77,14 +85,16 @@
 		04C4A650545A26AF9EFB8694 /* SketchOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SketchOverlay.swift; sourceTree = "<group>"; };
 		0502B2295E965CD6D40C3F48 /* Secrets.example.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Secrets.example.xcconfig; sourceTree = "<group>"; };
 		06AE6EAA836AB62666E0588D /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		06EC665E8FD4AF649B2FBCBE /* TripPlanRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripPlanRequest.swift; sourceTree = "<group>"; };
 		091DA45385BDE1646163649C /* MapStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapStyle.swift; sourceTree = "<group>"; };
 		0F256041FEE67AD589697AB6 /* ParkingRules.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParkingRules.swift; sourceTree = "<group>"; };
 		102B4A190B97F413B5196AB4 /* ChainBranchesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChainBranchesView.swift; sourceTree = "<group>"; };
 		179D12774DB975C9F4EEEF34 /* PlaceCategory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaceCategory.swift; sourceTree = "<group>"; };
-		1BD0AF78A916051929920D31 /* RoutePreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutePreviewView.swift; sourceTree = "<group>"; };
+		19590B355E4529F5E1777051 /* TripBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripBanner.swift; sourceTree = "<group>"; };
 		20A5422FD72E00EA7017CB10 /* TripBuilderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripBuilderView.swift; sourceTree = "<group>"; };
 		2932CD52DA5E27648F2A1AE1 /* SavedPlacesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedPlacesView.swift; sourceTree = "<group>"; };
 		2BC39EF679AE5F8BFB8443D6 /* PlannerScoringTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlannerScoringTests.swift; sourceTree = "<group>"; };
+		2CBD5A536F1DA0E448A739BD /* SpeechInput.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechInput.swift; sourceTree = "<group>"; };
 		38FC45DE2205E7B66F6FD169 /* LocalPlacesSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalPlacesSheet.swift; sourceTree = "<group>"; };
 		392067208DEAE0F6F419EF3B /* SketchRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SketchRouter.swift; sourceTree = "<group>"; };
 		3AF074EE9D2EA70880D452A5 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -93,6 +103,7 @@
 		45A11070D97661F379908834 /* WayfinderApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WayfinderApp.swift; sourceTree = "<group>"; };
 		49D609DCCC4B35ACA33DCB91 /* RequestCounter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RequestCounter.swift; sourceTree = "<group>"; };
 		4AACF17B4F02A5AD9839EE0D /* FasterRouteBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FasterRouteBanner.swift; sourceTree = "<group>"; };
+		4AF457E504CD7F492E32C1B6 /* RouteSummaryCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteSummaryCard.swift; sourceTree = "<group>"; };
 		6286ED62B76B34B195CD3F4F /* PlannerResultView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlannerResultView.swift; sourceTree = "<group>"; };
 		634CD6F2076995FA5F27AF78 /* ParkNearbySheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParkNearbySheet.swift; sourceTree = "<group>"; };
 		66A7D28BF6D56BE711A33A5C /* TripPlanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripPlanner.swift; sourceTree = "<group>"; };
@@ -106,8 +117,11 @@
 		83178FEB910655C3B9D59F18 /* SupabaseClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseClient.swift; sourceTree = "<group>"; };
 		8327625F49275E62344B8179 /* Place.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Place.swift; sourceTree = "<group>"; };
 		842552AE67F91DC173FF5D99 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
+		84BBDB6A64CD55CEBFDEC7D4 /* JourneySheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourneySheet.swift; sourceTree = "<group>"; };
 		8564BE7C472E5258AEF2D512 /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
 		8ED4D9192AFF468B178DFA87 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		911A8CC60284D956DF5F6BBD /* TripButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripButton.swift; sourceTree = "<group>"; };
+		934087D0DCFE40A2CDB60C3B /* StayPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StayPicker.swift; sourceTree = "<group>"; };
 		A86CE864971F1F0A6697FAF3 /* LocationPermission.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationPermission.swift; sourceTree = "<group>"; };
 		A9B4F226BA30A5FBDCF2168A /* NavigationEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationEngine.swift; sourceTree = "<group>"; };
 		B00615A305DA489A833D35D8 /* WayfinderTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = WayfinderTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -117,10 +131,12 @@
 		BA64134D4FFF3A91DF9275D0 /* MapViewRepresentable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapViewRepresentable.swift; sourceTree = "<group>"; };
 		BDE9B69F7AF5010DEEF667BB /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		C25C8E8C17716AD1435E7552 /* App.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = App.xcconfig; sourceTree = "<group>"; };
+		CE79E7217A49F11E02F30E8F /* PressMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PressMenu.swift; sourceTree = "<group>"; };
 		D938C648A675105327ABDC42 /* MatrixService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatrixService.swift; sourceTree = "<group>"; };
 		DE569DE4CCBE0B0040BDDFDD /* MapController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapController.swift; sourceTree = "<group>"; };
 		E0742DF725CEB179418C7ECE /* Wayfinder.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Wayfinder.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E291CC5A5AE6EB7E3DEF1560 /* PlaceSearchService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaceSearchService.swift; sourceTree = "<group>"; };
+		E3E4C8F5926CFB7CE438909F /* NaturalLanguageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NaturalLanguageView.swift; sourceTree = "<group>"; };
 		F1039C384BDD3E25265821F0 /* ParkingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParkingService.swift; sourceTree = "<group>"; };
 		F5538C87730DB7674D5977E1 /* SettingsKeys.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsKeys.swift; sourceTree = "<group>"; };
 		F816EF91847328D736997C52 /* Wayfinder.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Wayfinder.entitlements; sourceTree = "<group>"; };
@@ -181,6 +197,14 @@
 			path = App;
 			sourceTree = "<group>";
 		};
+		2AD97F2789C7EC17762AFF3F /* PressMenu */ = {
+			isa = PBXGroup;
+			children = (
+				CE79E7217A49F11E02F30E8F /* PressMenu.swift */,
+			);
+			path = PressMenu;
+			sourceTree = "<group>";
+		};
 		2CD3EBF0FEFB212FE0D75D10 /* Home */ = {
 			isa = PBXGroup;
 			children = (
@@ -189,6 +213,7 @@
 				DE569DE4CCBE0B0040BDDFDD /* MapController.swift */,
 				BA64134D4FFF3A91DF9275D0 /* MapViewRepresentable.swift */,
 				819863075758F91670783456 /* SearchView.swift */,
+				911A8CC60284D956DF5F6BBD /* TripButton.swift */,
 			);
 			path = Home;
 			sourceTree = "<group>";
@@ -207,6 +232,15 @@
 				A86CE864971F1F0A6697FAF3 /* LocationPermission.swift */,
 			);
 			path = Location;
+			sourceTree = "<group>";
+		};
+		50FD29F9E6938BB6D8B2E902 /* Language */ = {
+			isa = PBXGroup;
+			children = (
+				2CBD5A536F1DA0E448A739BD /* SpeechInput.swift */,
+				06EC665E8FD4AF649B2FBCBE /* TripPlanRequest.swift */,
+			);
+			path = Language;
 			sourceTree = "<group>";
 		};
 		5AD50301C89537D018F6A9E1 /* Fuel */ = {
@@ -296,6 +330,7 @@
 			children = (
 				EB6220228A38A3E8034F2BCC /* Fuel */,
 				84D7B34EFE4FA810D38F4242 /* Geo */,
+				50FD29F9E6938BB6D8B2E902 /* Language */,
 				4B88BB2B6EBEAD4430B882F1 /* Location */,
 				6DAC22BE96240FE24EA9E048 /* Navigation */,
 				1E0B87E736FDE202A5D0150B /* Networking */,
@@ -330,6 +365,7 @@
 			children = (
 				102B4A190B97F413B5196AB4 /* ChainBranchesView.swift */,
 				634CD6F2076995FA5F27AF78 /* ParkNearbySheet.swift */,
+				934087D0DCFE40A2CDB60C3B /* StayPicker.swift */,
 			);
 			path = Parking;
 			sourceTree = "<group>";
@@ -346,7 +382,8 @@
 		92FF99F64C1219F0F4A4C4A5 /* Preview */ = {
 			isa = PBXGroup;
 			children = (
-				1BD0AF78A916051929920D31 /* RoutePreviewView.swift */,
+				4AF457E504CD7F492E32C1B6 /* RouteSummaryCard.swift */,
+				19590B355E4529F5E1777051 /* TripBanner.swift */,
 			);
 			path = Preview;
 			sourceTree = "<group>";
@@ -377,10 +414,19 @@
 			path = Theme;
 			sourceTree = "<group>";
 		};
+		AB6BDF710F68230C3747E095 /* Language */ = {
+			isa = PBXGroup;
+			children = (
+				E3E4C8F5926CFB7CE438909F /* NaturalLanguageView.swift */,
+			);
+			path = Language;
+			sourceTree = "<group>";
+		};
 		BBD7268C503550BF2CE5824F /* Guidance */ = {
 			isa = PBXGroup;
 			children = (
 				4AACF17B4F02A5AD9839EE0D /* FasterRouteBanner.swift */,
+				84BBDB6A64CD55CEBFDEC7D4 /* JourneySheet.swift */,
 			);
 			path = Guidance;
 			sourceTree = "<group>";
@@ -410,9 +456,11 @@
 				5AD50301C89537D018F6A9E1 /* Fuel */,
 				BBD7268C503550BF2CE5824F /* Guidance */,
 				2CD3EBF0FEFB212FE0D75D10 /* Home */,
+				AB6BDF710F68230C3747E095 /* Language */,
 				8C1B11A98FA8090D7450FD27 /* Parking */,
 				6051A16688622EDDA8D41C86 /* Permission */,
 				F0C4650823A0978BD8F000CA /* Planner */,
+				2AD97F2789C7EC17762AFF3F /* PressMenu */,
 				92FF99F64C1219F0F4A4C4A5 /* Preview */,
 				4311540EEC66E8E3526BC5E2 /* Saved */,
 				5DA669E7AE687A5810F2EC56 /* Settings */,
@@ -573,6 +621,7 @@
 				4E5B5C334DE5FB895DA4560E /* GeoMath.swift in Sources */,
 				18F1CDC01D251521A2DF3523 /* GuidancePresenter.swift in Sources */,
 				7B4069EA1FDA847147EFC456 /* HomeView.swift in Sources */,
+				304B21443B2BF76DA626F19D /* JourneySheet.swift in Sources */,
 				C7C6FD68DDEB2375B2285ED1 /* LocalPlacesSheet.swift in Sources */,
 				56D54CD1507E71A85B47C62C /* LocationPermission.swift in Sources */,
 				C065105343945155C69C6BE2 /* MapController.swift in Sources */,
@@ -580,6 +629,7 @@
 				F7D25E9389CE52A9C46FD5BF /* MapViewRepresentable.swift in Sources */,
 				8EF8F1E6C74A9DF7A4C819B8 /* MatrixService.swift in Sources */,
 				1271DA703EDFBC99C31F5222 /* Models.swift in Sources */,
+				08608DD5026C095D05B57646 /* NaturalLanguageView.swift in Sources */,
 				F671DC844D6729E5622A7F7E /* NavigationEngine.swift in Sources */,
 				32C44DB06F1351836B83EF75 /* ParkNearbySheet.swift in Sources */,
 				90F7910F03DEC2F95E143E91 /* ParkingRules.swift in Sources */,
@@ -590,19 +640,25 @@
 				FB1D283846FC1CF124DC30F5 /* PlaceSearchService.swift in Sources */,
 				9F122DD94D5AA6919D7B080B /* PlannerResultView.swift in Sources */,
 				316174C66F12E5FEF263C07A /* PlannerScoring.swift in Sources */,
+				192323DB10AB97A8077753A1 /* PressMenu.swift in Sources */,
 				E09E0399B527226D8138AEE4 /* RequestCounter.swift in Sources */,
 				0DD15BC9210396E0D785778B /* RouteCalculator.swift in Sources */,
-				914852627CB3AF2CDF451903 /* RoutePreviewView.swift in Sources */,
+				81AF24FB716C305B75255658 /* RouteSummaryCard.swift in Sources */,
 				702B0462E7CC4469BCD029B6 /* SavedPlacesView.swift in Sources */,
 				33CE9DF8D547FC4A4CE7777C /* SearchView.swift in Sources */,
 				62285E04D31B31A42C4F949E /* SettingsKeys.swift in Sources */,
 				80DF2C077AE46FB79E9E383E /* SettingsView.swift in Sources */,
 				3B05C1B579DA6D416AFE5881 /* SketchOverlay.swift in Sources */,
 				CFF6A51D4B07362E4A424476 /* SketchRouter.swift in Sources */,
+				AAD15E1995825D412F72FED3 /* SpeechInput.swift in Sources */,
+				1041F2A21F299146620E0FC4 /* StayPicker.swift in Sources */,
 				EC3718CE8CA7D22599C91203 /* SupabaseClient.swift in Sources */,
 				DCFD3CEFD89EB7CAC768992A /* Theme.swift in Sources */,
 				A2B8255FB8DBB1F60D6C5BD6 /* Trip.swift in Sources */,
+				FAA3601484E6C000929DB61E /* TripBanner.swift in Sources */,
 				855A2419ED7360FCF9AF58F6 /* TripBuilderView.swift in Sources */,
+				10C943BCEA7B93D7C83419B5 /* TripButton.swift in Sources */,
+				E77BDB1E957DDDDD5E83BD37 /* TripPlanRequest.swift in Sources */,
 				FEEF97EC3323A9008F4CBFEE /* TripPlanner.swift in Sources */,
 				9914B8D55D99C7EF174F08E3 /* WalkingRouter.swift in Sources */,
 				0DD8178EBBD88C1621F5BF4C /* WayfinderApp.swift in Sources */,
